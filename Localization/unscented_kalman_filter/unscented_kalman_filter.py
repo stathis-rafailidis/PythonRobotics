@@ -15,6 +15,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg
+import pandas as pd
 
 from utils.angle import rot_mat_2d
 
@@ -228,13 +229,30 @@ def main():
 
     time = 0.0
 
+    #load the odom file
+    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_23.xlsx", sheet_name="added_noise_2", header=None)
+    i = 0
+
+    #input control
+    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_23.xlsx", sheet_name="input", header=None)
+
     while SIM_TIME >= time:
         time += DT
-        u = calc_input()
+        #u = calc_input()
+
+        v = input_control_dataframe.iloc[i,0]
+        yawrate = input_control_dataframe.iloc[i,1]
+        u = np.array([[v],[yawrate]])
+
+        x = odom_dataframe.iloc[i,0]
+        y = odom_dataframe.iloc[i,1]
+        
+        i += 1
+        odom = np.array([[x],[y]])
 
         xTrue, z, xDR, ud = observation(xTrue, xDR, u)
 
-        xEst, PEst = ukf_estimation(xEst, PEst, z, ud, wm, wc, gamma)
+        xEst, PEst = ukf_estimation(xEst, PEst, odom, u, wm, wc, gamma)
 
         # store data history
         hxEst = np.hstack((hxEst, xEst))
@@ -250,15 +268,15 @@ def main():
             plt.plot(hz[0, :], hz[1, :], ".g")
             plt.plot(np.array(hxTrue[0, :]).flatten(),
                      np.array(hxTrue[1, :]).flatten(), "-b")
-            plt.plot(np.array(hxDR[0, :]).flatten(),
-                     np.array(hxDR[1, :]).flatten(), "-k")
+            # plt.plot(np.array(hxDR[0, :]).flatten(),
+            #          np.array(hxDR[1, :]).flatten(), "-k")
             plt.plot(np.array(hxEst[0, :]).flatten(),
                      np.array(hxEst[1, :]).flatten(), "-r")
             plot_covariance_ellipse(xEst, PEst)
             plt.axis("equal")
             plt.grid(True)
             plt.pause(0.001)
-
+    plt.show()
 
 if __name__ == '__main__':
     main()

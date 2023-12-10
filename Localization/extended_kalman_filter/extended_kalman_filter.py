@@ -13,31 +13,34 @@ sys.path.append(str(pathlib.Path(__file__).parent.parent.parent))
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from utils.plot import plot_covariance_ellipse
 
 # Covariance for EKF simulation
 Q = np.diag([
-    0.1,  # variance of location on x-axis
-    0.1,  # variance of location on y-axis
-    np.deg2rad(1.0),  # variance of yaw angle
+    1,  # variance of location on x-axis
+    1,  # variance of location on y-axis
+    np.deg2rad(31.0),  # variance of yaw angle
     1.0  # variance of velocity
 ]) ** 2  # predict state covariance
-R = np.diag([1.0, 1.0]) ** 2  # Observation x,y position covariance
+R = np.diag([3.5, 3.5]) ** 2  # Observation x,y position covariance
+
+
 
 #  Simulation parameter
 INPUT_NOISE = np.diag([1.0, np.deg2rad(30.0)]) ** 2
 GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
 DT = 0.1  # time tick [s]
-SIM_TIME = 50.0  # simulation time [s]
+SIM_TIME = 58.0  # simulation time [s]
 
 show_animation = True
 
 
 def calc_input():
     v = 1.0  # [m/s]
-    yawrate = 0.1  # [rad/s]
+    yawrate = 0  # [rad/s]
     u = np.array([[v], [yawrate]])
     return u
 
@@ -79,7 +82,7 @@ def observation_model(x):
     ])
 
     z = H @ x
-
+    
     return z
 
 
@@ -141,6 +144,15 @@ def main():
 
     time = 0.0
 
+    #load the odom file
+    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_30.xlsx", sheet_name="added_noise_2", header=None)
+    i = 0
+    #odom_dataframe = odom_dataframe.set_axis(["x", "y","θ"], axis="columns") 
+    #print(odom_dataframe.iloc[[0]])
+
+    #input control
+    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_30.xlsx", sheet_name="input", header=None)
+
     # State Vector [x y yaw v]'
     xEst = np.zeros((4, 1))
     xTrue = np.zeros((4, 1))
@@ -156,17 +168,31 @@ def main():
 
     while SIM_TIME >= time:
         time += DT
-        u = calc_input()
+        v = input_control_dataframe.iloc[i,0]
+        yawrate = input_control_dataframe.iloc[i,1]
+        u = np.array([[v],[yawrate]])
+        #u = calc_input()
 
         xTrue, z, xDR, ud = observation(xTrue, xDR, u)
+        odom = []
+        # x = odom_dataframe.at[i,0]
+        # y = odom_dataframe.at[i,1]
 
-        xEst, PEst = ekf_estimation(xEst, PEst, z, ud)
+        x = odom_dataframe.iloc[i,0]
+        y = odom_dataframe.iloc[i,1]
+        
+        i += 1
+        odom = np.array([[x],[y]])
+
+        #xEst, PEst = ekf_estimation(xEst, PEst, z, ud)
+        xEst, PEst = ekf_estimation(xEst, PEst, odom, u)
 
         # store data history
         hxEst = np.hstack((hxEst, xEst))
-        hxDR = np.hstack((hxDR, xDR))
+        #hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
-        hz = np.hstack((hz, z))
+        #hz = np.hstack((hz, z))
+        hz = np.hstack((hz, odom))
 
         if show_animation:
             plt.cla()
@@ -176,14 +202,15 @@ def main():
             plt.plot(hz[0, :], hz[1, :], ".g")
             plt.plot(hxTrue[0, :].flatten(),
                      hxTrue[1, :].flatten(), "-b")
-            plt.plot(hxDR[0, :].flatten(),
-                     hxDR[1, :].flatten(), "-k")
+            # plt.plot(hxDR[0, :].flatten(),
+            #          hxDR[1, :].flatten(), "-k")
             plt.plot(hxEst[0, :].flatten(),
                      hxEst[1, :].flatten(), "-r")
             plot_covariance_ellipse(xEst[0, 0], xEst[1, 0], PEst)
             plt.axis("equal")
             plt.grid(True)
             plt.pause(0.001)
+    plt.show()
 
 
 if __name__ == '__main__':
