@@ -32,8 +32,8 @@ R = np.diag([1.0, 1.0]) ** 2  # Observation x,y position covariance
 INPUT_NOISE = np.diag([1.0, np.deg2rad(30.0)]) ** 2
 GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
-DT = 0.1  # time tick [s]
-SIM_TIME = 50.0  # simulation time [s]
+DT = 0.1428  # time tick [s]
+SIM_TIME = 230.0  # simulation time [s]
 
 #  UKF Parameter
 ALPHA = 0.001
@@ -230,11 +230,11 @@ def main():
     time = 0.0
 
     #load the odom file
-    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_23.xlsx", sheet_name="added_noise_2", header=None)
+    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Sheet2", header=None)
     i = 0
 
     #input control
-    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_23.xlsx", sheet_name="input", header=None)
+    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Input", header=None)
 
     while SIM_TIME >= time:
         time += DT
@@ -258,7 +258,7 @@ def main():
         hxEst = np.hstack((hxEst, xEst))
         hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
-        hz = np.hstack((hz, z))
+        hz = np.hstack((hz, odom))
 
         if show_animation:
             plt.cla()

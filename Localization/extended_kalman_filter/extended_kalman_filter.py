@@ -32,8 +32,8 @@ R = np.diag([3.5, 3.5]) ** 2  # Observation x,y position covariance
 INPUT_NOISE = np.diag([1.0, np.deg2rad(30.0)]) ** 2
 GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
-DT = 0.1  # time tick [s]
-SIM_TIME = 58.0  # simulation time [s]
+DT = 0.1428  # time tick [s]
+SIM_TIME = 230.0  # simulation time [s]
 
 show_animation = True
 
@@ -145,13 +145,13 @@ def main():
     time = 0.0
 
     #load the odom file
-    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_30.xlsx", sheet_name="added_noise_2", header=None)
+    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Sheet2", header=None)
     i = 0
     #odom_dataframe = odom_dataframe.set_axis(["x", "y","θ"], axis="columns") 
     #print(odom_dataframe.iloc[[0]])
 
     #input control
-    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_11_30.xlsx", sheet_name="input", header=None)
+    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Input", header=None)
 
     # State Vector [x y yaw v]'
     xEst = np.zeros((4, 1))
