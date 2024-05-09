@@ -34,8 +34,9 @@ GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
 DT = 0.1428  # time tick [s]
 SIM_TIME = 230.0  # simulation time [s]
+#SIM_TIME = 23.0  # simulation time [s]
 
-show_animation = True
+show_animation = False
 
 
 def calc_input():
@@ -145,13 +146,13 @@ def main():
     time = 0.0
 
     #load the odom file
-    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Sheet2", header=None)
+    odom_dataframe = pd.read_excel(r"C:\Users\stathis\OneDrive\Διπλωματική\results from Kalman\kalman_data_7_1_24.xlsx", sheet_name="added_noise_static", header=None)
     i = 0
     #odom_dataframe = odom_dataframe.set_axis(["x", "y","θ"], axis="columns") 
     #print(odom_dataframe.iloc[[0]])
 
     #input control
-    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Input", header=None)
+    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\OneDrive\Διπλωματική\results from Kalman\kalman_data_18_12_23.xlsx", sheet_name="Input", header=None)
 
     # State Vector [x y yaw v]'
     xEst = np.zeros((4, 1))
@@ -187,12 +188,16 @@ def main():
         #xEst, PEst = ekf_estimation(xEst, PEst, z, ud)
         xEst, PEst = ekf_estimation(xEst, PEst, odom, u)
 
+
+        file = open("extended_kalman.txt", "a")
+        file.write((str(xEst[0]) + " , " + str(xEst[1]) + "\n").replace("[","").replace("]",""))
         # store data history
         hxEst = np.hstack((hxEst, xEst))
         #hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
         #hz = np.hstack((hz, z))
         hz = np.hstack((hz, odom))
+        file.close()
 
         if show_animation:
             plt.cla()

@@ -21,18 +21,20 @@ from utils.angle import rot_mat_2d
 
 # Covariance for UKF simulation
 Q = np.diag([
-    0.1,  # variance of location on x-axis
-    0.1,  # variance of location on y-axis
-    np.deg2rad(1.0),  # variance of yaw angle
-    1.0  # variance of velocity
+    1,  # variance of location on x-axis
+    1,  # variance of location on y-axis
+    np.deg2rad(0),  # variance of yaw angle
+    0  # variance of velocity
 ]) ** 2  # predict state covariance
-R = np.diag([1.0, 1.0]) ** 2  # Observation x,y position covariance
+R = np.diag([2, 2]) ** 2  # Observation x,y position covariance
 
 #  Simulation parameter
+# These 2 are not being used
 INPUT_NOISE = np.diag([1.0, np.deg2rad(30.0)]) ** 2
 GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
 DT = 0.1428  # time tick [s]
+#SIM_TIME = 230.0  # simulation time [s]
 SIM_TIME = 230.0  # simulation time [s]
 
 #  UKF Parameter
@@ -40,7 +42,7 @@ ALPHA = 0.001
 BETA = 2
 KAPPA = 0
 
-show_animation = True
+show_animation = False
 
 
 def calc_input():
@@ -95,6 +97,7 @@ def generate_sigma_points(xEst, PEst, gamma):
     sigma = xEst
     Psqrt = scipy.linalg.sqrtm(PEst)
     n = len(xEst[:, 0])
+
     # Positive direction
     for i in range(n):
         sigma = np.hstack((sigma, xEst + gamma * Psqrt[:, i:i + 1]))
@@ -230,11 +233,11 @@ def main():
     time = 0.0
 
     #load the odom file
-    odom_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Sheet2", header=None)
+    odom_dataframe = pd.read_excel(r"C:\Users\stathis\OneDrive\Διπλωματική\results from Kalman\kalman_data_7_1_24.xlsx", sheet_name="added_noise_static", header=None)
     i = 0
 
     #input control
-    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\Desktop\kalman_data_18_12_23.xlsx", sheet_name="Input", header=None)
+    input_control_dataframe = pd.read_excel(r"C:\Users\stathis\OneDrive\Διπλωματική\results from Kalman\kalman_data_18_12_23.xlsx", sheet_name="Input", header=None)
 
     while SIM_TIME >= time:
         time += DT
@@ -254,12 +257,18 @@ def main():
 
         xEst, PEst = ukf_estimation(xEst, PEst, odom, u, wm, wc, gamma)
 
+
+        file = open("file_UNK.txt", "a")
+        file.write((str(xEst[0]) + " , " + str(xEst[1]) + "\n").replace("[","").replace("]",""))
         # store data history
         hxEst = np.hstack((hxEst, xEst))
-        hxDR = np.hstack((hxDR, xDR))
+        # hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
         hz = np.hstack((hz, odom))
 
+        #hxEst.tofile('output.txt', sep=',', format='%0.2f')
+        file.close()
+        
         if show_animation:
             plt.cla()
             # for stopping simulation with the esc key.
@@ -275,8 +284,10 @@ def main():
             plot_covariance_ellipse(xEst, PEst)
             plt.axis("equal")
             plt.grid(True)
-            plt.pause(0.001)
+            plt.pause(0.0001)
+
     plt.show()
+    
 
 if __name__ == '__main__':
     main()
