@@ -35,7 +35,7 @@ GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
 DT = 0.1428  # time tick [s]
 #SIM_TIME = 230.0  # simulation time [s]
-SIM_TIME = 230.0  # simulation time [s]
+SIM_TIME = 2.0  # simulation time [s]
 
 #  UKF Parameter
 ALPHA = 0.001
@@ -52,18 +52,13 @@ def calc_input():
     return u
 
 
-def observation(xTrue, xd, u):
+def observation(xTrue, u):
     xTrue = motion_model(xTrue, u)
 
     # add noise to gps x-y
     z = observation_model(xTrue) + GPS_NOISE @ np.random.randn(2, 1)
 
-    # add noise to input
-    ud = u + INPUT_NOISE @ np.random.randn(2, 1)
-
-    xd = motion_model(xd, ud)
-
-    return xTrue, z, xd, ud
+    return xTrue, z
 
 
 def motion_model(x, u):
@@ -155,6 +150,7 @@ def calc_pxz(sigma, x, z_sigma, zb, wc):
 def ukf_estimation(xEst, PEst, z, u, wm, wc, gamma):
     #  Predict
     sigma = generate_sigma_points(xEst, PEst, gamma)
+    print(sigma, "this is in predict")
     sigma = predict_sigma_motion(sigma, u)
     xPred = (wm @ sigma.T).T
     PPred = calc_sigma_covariance(xPred, sigma, wc, Q)
@@ -163,6 +159,7 @@ def ukf_estimation(xEst, PEst, z, u, wm, wc, gamma):
     zPred = observation_model(xPred)
     y = z - zPred
     sigma = generate_sigma_points(xPred, PPred, gamma)
+    print(sigma, "this is in update")
     zb = (wm @ sigma.T).T
     z_sigma = predict_sigma_observation(sigma)
     st = calc_sigma_covariance(zb, z_sigma, wc, R)
@@ -253,13 +250,14 @@ def main():
         i += 1
         odom = np.array([[x],[y]])
 
-        xTrue, z, xDR, ud = observation(xTrue, xDR, u)
+        xTrue, z = observation(xTrue, u)
 
         xEst, PEst = ukf_estimation(xEst, PEst, odom, u, wm, wc, gamma)
 
 
         file = open("file_UNK.txt", "a")
-        file.write((str(xEst[0]) + " , " + str(xEst[1]) + "\n").replace("[","").replace("]",""))
+        # file.write((str(xEst[0]) + " , " + str(xEst[1]) + "\n").replace("[","").replace("]",""))
+        file.write((str(xEst[0]) + " , " + str(xEst[1]) +  "," + str(xEst[2]) + "," + str(xEst[3]) + "\n").replace("[","").replace("]",""))
         # store data history
         hxEst = np.hstack((hxEst, xEst))
         # hxDR = np.hstack((hxDR, xDR))

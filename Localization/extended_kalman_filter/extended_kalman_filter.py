@@ -33,8 +33,8 @@ INPUT_NOISE = np.diag([1.0, np.deg2rad(30.0)]) ** 2
 GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
 DT = 0.1428  # time tick [s]
-SIM_TIME = 230.0  # simulation time [s]
-#SIM_TIME = 23.0  # simulation time [s]
+# SIM_TIME = 230.0  # simulation time [s]
+SIM_TIME = 23.0  # simulation time [s]
 
 show_animation = False
 
@@ -132,6 +132,7 @@ def ekf_estimation(xEst, PEst, z, u):
     #  Update
     jH = jacob_h()
     zPred = observation_model(xPred)
+    print(zPred.shape)
     y = z - zPred
     S = jH @ PPred @ jH.T + R
     K = PPred @ jH.T @ np.linalg.inv(S)
@@ -187,6 +188,7 @@ def main():
 
         #xEst, PEst = ekf_estimation(xEst, PEst, z, ud)
         xEst, PEst = ekf_estimation(xEst, PEst, odom, u)
+       
 
 
         file = open("extended_kalman.txt", "a")
